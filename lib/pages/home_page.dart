@@ -121,8 +121,8 @@ class __WeatherComponentState extends State<_WeatherComponent> {
     final weather = widget.state.currentWeatherResponse.weather;
     setState(() {
       if (weather.isNotEmpty) {
-        _url = weather[0].main.produceUrl();
-        _color = weather[0].main.produceColor();
+        _url = weather.first.main.produceUrl();
+        _color = weather.first.main.produceColor();
 
       }
     });
@@ -274,7 +274,7 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                     ),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                        padding: const EdgeInsets.only(left: 8.0, right: 8.0,bottom: 8.0),
                         child: ListView.separated(
                          // physics: NeverScrollableScrollPhysics(),
                           itemCount: widget.state.formattedData.length,
@@ -284,6 +284,7 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                           ),
                           itemBuilder: (context, i) =>
                               ExpansionTile(
+
 
                                 leading: Text(
                                 DateFormat("EEEE").format(DateTime.parse(widget.state.formattedData.values.toList()[i].first.dtTxt)),
@@ -296,6 +297,7 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                                     style: Theme.of(context).textTheme.headline6),
                                 children: [
                                   ListView.builder(
+                                    physics:NeverScrollableScrollPhysics(),
                                     itemCount: widget.state.formattedData.values.toList()[i].length,
                                     itemBuilder: (context,j){
                                     return ListTile(

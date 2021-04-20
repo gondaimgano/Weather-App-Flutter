@@ -48,9 +48,6 @@ class CurrentWeatherBloc
         _forecastResponse = ForecastResponse.fromJson(response0.body);
         _formattedData = groupBy(_forecastResponse.list,
             (v) => DateFormat.yMd().format(DateTime.parse(v.dtTxt)));
-          print(_formattedData.toString());
-          //_formattedData.keys.toList()[0];
-        //  _formattedData.values.toList()[0];
         yield CurrentWeatherLoaded(
           _currentWeatherResponse,
           _forecastResponse,
