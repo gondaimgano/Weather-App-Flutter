@@ -28,39 +28,40 @@ class MyApp extends StatelessWidget {
         title: 'DVT Weather App',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
+          dividerColor: Colors.transparent,
           primarySwatch: Colors.indigo,
           brightness: Brightness.dark,
 
         ),
-        home: RegisterService(),
+        home: RegisterServiceWidget(),
       ),
     );
   }
 }
 
-class RegisterService extends StatelessWidget {
+class RegisterServiceWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
       create: (_) => WeatherApiService.create(),
-      child: RegisterRepository(),
+      child: RegisterRepositoryWidget(),
     );
   }
 }
 
-class RegisterRepository extends StatelessWidget {
+class RegisterRepositoryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
       create: (_) => WeatherRepository(
         context.read(),
       ),
-      child: RegisterBlocs(),
+      child: RegisterBusinessLogicWidget(),
     );
   }
 }
 
-class RegisterBlocs extends StatelessWidget {
+class RegisterBusinessLogicWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(

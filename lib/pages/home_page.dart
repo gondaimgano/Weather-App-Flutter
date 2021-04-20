@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dvt_weather_app/bloc/index.dart';
 import 'package:intl/intl.dart';
-import 'package:overlay_support/overlay_support.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -59,47 +58,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _WeatherFailedComponent extends StatelessWidget {
-  final CurrentWeatherFailed errorState;
-
-  const _WeatherFailedComponent({Key key, this.errorState}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-        child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.error,
-          size: 64,
-          color: Colors.black54,
-        ),
-        SizedBox(
-          height: 12,
-        ),
-        Text(
-          errorState.message,
-          style: Theme.of(context)
-              .textTheme
-              .headline6
-              .copyWith(color: Colors.black),
-        ),
-        SizedBox(
-          height: 12,
-        ),
-        ElevatedButton(
-            onPressed: () {
-              context.read<CurrentWeatherBloc>().add(FetchCurrentWeather());
-            },
-            child: Text(
-              "Try again",
-            )),
-      ],
-    ));
-  }
-}
-
 class _WeatherComponent extends StatefulWidget {
   final CurrentWeatherState state;
 
@@ -127,13 +85,13 @@ class __WeatherComponentState extends State<_WeatherComponent> {
       }
     });
   }
- Widget _produceIcon(Weather weather){
-   // print(weather.main);
-   if( weather.main.toLowerCase().contains("cloud"))
-     return IconButton(icon: Image.asset("assets/symbols/partlysunny.png"), onPressed: (){});
-   if(weather.main.toLowerCase().contains("rain"))
-     return IconButton(icon: Image.asset("assets/symbols/rain.png"), onPressed: (){});
-   return IconButton(icon: Image.asset("assets/symbols/clear.png"), onPressed: (){});
+  Widget _produceIcon(Weather weather){
+    // print(weather.main);
+    if( weather.main.toLowerCase().contains("cloud"))
+      return IconButton(icon: Image.asset("assets/symbols/partlysunny.png"), onPressed: (){});
+    if(weather.main.toLowerCase().contains("rain"))
+      return IconButton(icon: Image.asset("assets/symbols/rain.png"), onPressed: (){});
+    return IconButton(icon: Image.asset("assets/symbols/clear.png"), onPressed: (){});
   }
 
   @override
@@ -276,22 +234,22 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                       child: Padding(
                         padding: const EdgeInsets.only(left: 8.0, right: 8.0,bottom: 8.0),
                         child: ListView.separated(
-                         // physics: NeverScrollableScrollPhysics(),
+                          // physics: NeverScrollableScrollPhysics(),
                           itemCount: widget.state.formattedData.length,
                           separatorBuilder: (BuildContext context, int index) =>
                               SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.02,
-                          ),
+                                height: MediaQuery.of(context).size.height * 0.02,
+                              ),
                           itemBuilder: (context, i) =>
                               ExpansionTile(
 
 
                                 leading: Text(
-                                DateFormat("EEEE").format(DateTime.parse(widget.state.formattedData.values.toList()[i].first.dtTxt)),
-                                style: Theme.of(context).textTheme.headline6,
-                              ),
+                                  DateFormat("EEEE").format(DateTime.parse(widget.state.formattedData.values.toList()[i].first.dtTxt)),
+                                  style: Theme.of(context).textTheme.headline6,
+                                ),
                                 title:
-                            _produceIcon(widget.state.formattedData.values.toList()[i].first.weather.first) ,
+                                _produceIcon(widget.state.formattedData.values.toList()[i].first.weather.first) ,
                                 trailing:  Text(
                                     "${widget.state.formattedData.values.toList()[i].first.main.temp.floor()} ${String.fromCharCode($deg)} ",
                                     style: Theme.of(context).textTheme.headline6),
@@ -300,18 +258,18 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                                     physics:NeverScrollableScrollPhysics(),
                                     itemCount: widget.state.formattedData.values.toList()[i].length,
                                     itemBuilder: (context,j){
-                                    return ListTile(
-                                      leading: Text(
-                                        DateFormat("h:mm a").format(DateTime.parse(widget.state.formattedData.values.toList()[i][j].dtTxt)),
-                                        style: Theme.of(context).textTheme.subtitle1,
-                                      ),
-                                      title: _produceIcon(widget.state.formattedData.values.toList()[i][j].weather.first),
-                                      trailing:Text(
-                                          "${widget.state.formattedData.values.toList()[i][j].main.temp.floor()} ${String.fromCharCode($deg)} ",
-                                          style: Theme.of(context).textTheme.subtitle1)
+                                      return ListTile(
+                                          leading: Text(
+                                            DateFormat("h:mm a").format(DateTime.parse(widget.state.formattedData.values.toList()[i][j].dtTxt)),
+                                            style: Theme.of(context).textTheme.subtitle1,
+                                          ),
+                                          title: _produceIcon(widget.state.formattedData.values.toList()[i][j].weather.first),
+                                          trailing:Text(
+                                              "${widget.state.formattedData.values.toList()[i][j].main.temp.floor()} ${String.fromCharCode($deg)} ",
+                                              style: Theme.of(context).textTheme.subtitle1)
 
-                                    );
-                                  },shrinkWrap: true,)
+                                      );
+                                    },shrinkWrap: true,)
                                 ],
                               ),
                           shrinkWrap: true,
@@ -328,3 +286,46 @@ class __WeatherComponentState extends State<_WeatherComponent> {
     );
   }
 }
+
+
+class _WeatherFailedComponent extends StatelessWidget {
+  final CurrentWeatherFailed errorState;
+
+  const _WeatherFailedComponent({Key key, this.errorState}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.error,
+          size: 64,
+          color: Colors.black54,
+        ),
+        SizedBox(
+          height: 12,
+        ),
+        Text(
+          errorState.message,
+          style: Theme.of(context)
+              .textTheme
+              .headline6
+              .copyWith(color: Colors.black),
+        ),
+        SizedBox(
+          height: 12,
+        ),
+        ElevatedButton(
+            onPressed: () {
+              context.read<CurrentWeatherBloc>().add(FetchCurrentWeather());
+            },
+            child: Text(
+              "Try again",
+            )),
+      ],
+    ));
+  }
+}
+
