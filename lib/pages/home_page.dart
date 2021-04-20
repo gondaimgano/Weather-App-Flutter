@@ -23,36 +23,143 @@ class _HomePageState extends State<HomePage> {
           context.read<CurrentWeatherBloc>().add(FetchCurrentWeather());
         },
         child: BlocConsumer<CurrentWeatherBloc, CurrentWeatherState>(
-            listener: (context, state) {},
-            builder: (context, state) {
-          if (state is CurrentWeatherLoaded)
-            return _WeatherComponent(state: state);
-          if (state is CurrentWeatherFailed)
-            return _WeatherFailedComponent(errorState: state);
-          if (state is CurrentWeatherInProgress)
-            if (state
-                      .currentWeatherResponse !=
-                  null &&
-              state.forecastResponse != null)
-            return _WeatherComponent(state: state);
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children:[
-                SizedBox(
-                  width: MediaQuery.of(context).size.width*0.23,
-                  child: LinearProgressIndicator(
-                    minHeight:8,
-                  valueColor: AlwaysStoppedAnimation(Colors.black),
-              ),
-                ),
-                SizedBox(height: 12,),
-                Text("Fetching...",style: Theme.of(context).textTheme.headline6.copyWith(color: Colors.black54),)
-              ]
+            listener: (context, state) async {
+              if (state is CurrentWeatherLoaded) {
+                if(state.firstRun)
+            await showGeneralDialog(
+                context: context,
+                barrierColor: Colors.black54.withOpacity(0.4),
+                barrierDismissible: true,
+                barrierLabel: "Information",
+                pageBuilder: (BuildContext context, Animation<double> animation,
+                    Animation<double> secondaryAnimation) {
+                  return Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          height: MediaQuery.of(context).size.height,
+                        ),
+                        Align(
+                          alignment: Alignment.topCenter.add(Alignment(0, 0.1)),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.refresh,color: Colors.white,size: 30,),
+                              SizedBox(height: 12,),
+                              Text(
+                                "1. Pull down from this top edge to refresh forecast",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .subtitle1
+                                    .copyWith(color: Colors.white),
+                              ),
+                              SizedBox(
+                                height: 12,
+                              ),
+                              RotatedBox(
+                                  quarterTurns: 3,
+                                  child: Icon(
+                                    Icons.arrow_back_rounded,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ))
+                            ],
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.face,
+                                color: Colors.white,
+                                size: 35,
+                              ),
+                              SizedBox(
+                                height: 12,
+                              ),
+                              Text(
+                                "Hi !",
+                                style: Theme.of(context).textTheme.headline6,
+                              ),
+                              SizedBox(
+                                height: 12,
+                              ),
+                              Text("Some important things for you to know.",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .caption
+                                      .copyWith(color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment(-0.9, 0.6),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              RotatedBox(
 
-            ),
-          );
-        }),
+                                  quarterTurns: 3,
+                                  child: Icon(Icons.redo_rounded,size: 30,),),
+                              SizedBox(height: 12,),
+                              Text(
+                                  "2. Tap on a forecast to view more details",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1
+                                      .copyWith(color: Colors.white)),
+
+
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  );
+                });
+          }
+        },
+            builder: (context, state) {
+              if (state is CurrentWeatherLoaded)
+                return _WeatherComponent(state: state);
+              if (state is CurrentWeatherFailed)
+                return _WeatherFailedComponent(errorState: state);
+              if (state is CurrentWeatherInProgress)
+                if (state
+                    .currentWeatherResponse !=
+                    null &&
+                    state.forecastResponse != null)
+                  return _WeatherComponent(state: state);
+              return Center(
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: MediaQuery
+                            .of(context)
+                            .size
+                            .width * 0.23,
+                        child: LinearProgressIndicator(
+                          minHeight: 8,
+                          valueColor: AlwaysStoppedAnimation(Colors.black),
+                        ),
+                      ),
+                      SizedBox(height: 12,),
+                      Text("Fetching...", style: Theme
+                          .of(context)
+                          .textTheme
+                          .headline6
+                          .copyWith(color: Colors.black54),)
+                    ]
+
+                ),
+              );
+            }),
       ),
     );
   }
@@ -81,17 +188,20 @@ class __WeatherComponentState extends State<_WeatherComponent> {
       if (weather.isNotEmpty) {
         _url = weather.first.main.produceUrl();
         _color = weather.first.main.produceColor();
-
       }
     });
   }
-  Widget _produceIcon(Weather weather){
+
+  Widget _produceIcon(Weather weather) {
     // print(weather.main);
-    if( weather.main.toLowerCase().contains("cloud"))
-      return IconButton(icon: Image.asset("assets/symbols/partlysunny.png"), onPressed: (){});
-    if(weather.main.toLowerCase().contains("rain"))
-      return IconButton(icon: Image.asset("assets/symbols/rain.png"), onPressed: (){});
-    return IconButton(icon: Image.asset("assets/symbols/clear.png"), onPressed: (){});
+    if (weather.main.toLowerCase().contains("cloud"))
+      return IconButton(icon: Image.asset("assets/symbols/partlysunny.png"),
+          onPressed: () {});
+    if (weather.main.toLowerCase().contains("rain"))
+      return IconButton(
+          icon: Image.asset("assets/symbols/rain.png"), onPressed: () {});
+    return IconButton(
+        icon: Image.asset("assets/symbols/clear.png"), onPressed: () {});
   }
 
   @override
@@ -105,18 +215,33 @@ class __WeatherComponentState extends State<_WeatherComponent> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Container(
-        height: MediaQuery.of(context).size.height * 1.02,
+        height: MediaQuery
+            .of(context)
+            .size
+            .height * 1.02,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: MediaQuery.of(context).size.height * 0.45,
-              width: MediaQuery.of(context).size.width,
+              height: MediaQuery
+                  .of(context)
+                  .size
+                  .height * 0.45,
+              width: MediaQuery
+                  .of(context)
+                  .size
+                  .width,
               child: Stack(
                 children: [
                   Container(
-                    height: MediaQuery.of(context).size.height * 0.45,
-                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery
+                        .of(context)
+                        .size
+                        .height * 0.45,
+                    width: MediaQuery
+                        .of(context)
+                        .size
+                        .width,
                   ),
                   Positioned.fill(
                     child: Image.asset(
@@ -131,9 +256,13 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          "${widget.state.currentWeatherResponse.main.temp.floor()} ${String.fromCharCode($deg)}",
+                          "${widget.state.currentWeatherResponse.main.temp
+                              .floor()} ${String.fromCharCode($deg)}",
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headline2,
+                          style: Theme
+                              .of(context)
+                              .textTheme
+                              .headline2,
                         ),
                         SizedBox(
                           height: 12,
@@ -143,7 +272,10 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                           Text(
                             widget.state.currentWeatherResponse.weather[0].main,
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headline6,
+                            style: Theme
+                                .of(context)
+                                .textTheme
+                                .headline6,
                           ),
                         SizedBox(
                           height: 12,
@@ -175,13 +307,19 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                  "${widget.state.currentWeatherResponse.main.tempMin.floor()} ${String.fromCharCode($deg)}",
-                                  style: Theme.of(context).textTheme.headline6),
+                                  "${widget.state.currentWeatherResponse.main
+                                      .tempMin.floor()} ${String.fromCharCode(
+                                      $deg)}",
+                                  style: Theme
+                                      .of(context)
+                                      .textTheme
+                                      .headline6),
                               SizedBox(
                                 height: 4,
                               ),
                               Text("Min",
-                                  style: Theme.of(context)
+                                  style: Theme
+                                      .of(context)
                                       .textTheme
                                       .caption
                                       .copyWith(letterSpacing: 2)),
@@ -192,13 +330,19 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                  "${widget.state.currentWeatherResponse.main.temp.floor()} ${String.fromCharCode($deg)}",
-                                  style: Theme.of(context).textTheme.headline6),
+                                  "${widget.state.currentWeatherResponse.main
+                                      .temp.floor()} ${String.fromCharCode(
+                                      $deg)}",
+                                  style: Theme
+                                      .of(context)
+                                      .textTheme
+                                      .headline6),
                               SizedBox(
                                 height: 4,
                               ),
                               Text("Current",
-                                  style: Theme.of(context)
+                                  style: Theme
+                                      .of(context)
                                       .textTheme
                                       .caption
                                       .copyWith(letterSpacing: 2)),
@@ -209,13 +353,19 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                  "${widget.state.currentWeatherResponse.main.tempMax.floor()} ${String.fromCharCode($deg)}",
-                                  style: Theme.of(context).textTheme.headline6),
+                                  "${widget.state.currentWeatherResponse.main
+                                      .tempMax.floor()} ${String.fromCharCode(
+                                      $deg)}",
+                                  style: Theme
+                                      .of(context)
+                                      .textTheme
+                                      .headline6),
                               SizedBox(
                                 height: 4,
                               ),
                               Text("Max",
-                                  style: Theme.of(context)
+                                  style: Theme
+                                      .of(context)
                                       .textTheme
                                       .caption
                                       .copyWith(letterSpacing: 2)),
@@ -232,44 +382,77 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                     ),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 8.0, right: 8.0,bottom: 8.0),
+                        padding: const EdgeInsets.only(
+                            bottom: 8.0),
                         child: ListView.separated(
                           // physics: NeverScrollableScrollPhysics(),
                           itemCount: widget.state.formattedData.length,
                           separatorBuilder: (BuildContext context, int index) =>
                               SizedBox(
-                                height: MediaQuery.of(context).size.height * 0.02,
+                                height: MediaQuery
+                                    .of(context)
+                                    .size
+                                    .height * 0.02,
                               ),
                           itemBuilder: (context, i) =>
                               ExpansionTile(
 
 
                                 leading: Text(
-                                  DateFormat("EEEE").format(DateTime.parse(widget.state.formattedData.values.toList()[i].first.dtTxt)),
-                                  style: Theme.of(context).textTheme.headline6,
+                                  DateFormat("EEEE").format(DateTime.parse(
+                                      widget.state.formattedData.values
+                                          .toList()[i].first.dtTxt)),
+                                  style: Theme
+                                      .of(context)
+                                      .textTheme
+                                      .headline6,
                                 ),
                                 title:
-                                _produceIcon(widget.state.formattedData.values.toList()[i].first.weather.first) ,
-                                trailing:  Text(
-                                    "${widget.state.formattedData.values.toList()[i].first.main.temp.floor()} ${String.fromCharCode($deg)} ",
-                                    style: Theme.of(context).textTheme.headline6),
+                                _produceIcon(widget.state.formattedData.values
+                                    .toList()[i].first.weather.first),
+                                trailing: Text(
+                                    "${widget.state.formattedData.values
+                                        .toList()[i].first.main.temp
+                                        .floor()} ${String.fromCharCode(
+                                        $deg)} ",
+                                    style: Theme
+                                        .of(context)
+                                        .textTheme
+                                        .headline6),
                                 children: [
                                   ListView.builder(
-                                    physics:NeverScrollableScrollPhysics(),
-                                    itemCount: widget.state.formattedData.values.toList()[i].length,
-                                    itemBuilder: (context,j){
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemCount: widget.state.formattedData.values
+                                        .toList()[i].length,
+                                    itemBuilder: (context, j) {
                                       return ListTile(
                                           leading: Text(
-                                            DateFormat("h:mm a").format(DateTime.parse(widget.state.formattedData.values.toList()[i][j].dtTxt)),
-                                            style: Theme.of(context).textTheme.subtitle1,
+                                            DateFormat("h:mm a").format(
+                                                DateTime.parse(
+                                                    widget.state.formattedData
+                                                        .values.toList()[i][j]
+                                                        .dtTxt)),
+                                            style: Theme
+                                                .of(context)
+                                                .textTheme
+                                                .subtitle1,
                                           ),
-                                          title: _produceIcon(widget.state.formattedData.values.toList()[i][j].weather.first),
-                                          trailing:Text(
-                                              "${widget.state.formattedData.values.toList()[i][j].main.temp.floor()} ${String.fromCharCode($deg)} ",
-                                              style: Theme.of(context).textTheme.subtitle1)
+                                          title: _produceIcon(
+                                              widget.state.formattedData.values
+                                                  .toList()[i][j].weather
+                                                  .first),
+                                          trailing: Text(
+                                              "${widget.state.formattedData
+                                                  .values.toList()[i][j].main
+                                                  .temp.floor()} ${String
+                                                  .fromCharCode($deg)} ",
+                                              style: Theme
+                                                  .of(context)
+                                                  .textTheme
+                                                  .subtitle1)
 
                                       );
-                                    },shrinkWrap: true,)
+                                    }, shrinkWrap: true,)
                                 ],
                               ),
                           shrinkWrap: true,
@@ -297,35 +480,36 @@ class _WeatherFailedComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
         child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.error,
-          size: 64,
-          color: Colors.black54,
-        ),
-        SizedBox(
-          height: 12,
-        ),
-        Text(
-          errorState.message,
-          style: Theme.of(context)
-              .textTheme
-              .headline6
-              .copyWith(color: Colors.black),
-        ),
-        SizedBox(
-          height: 12,
-        ),
-        ElevatedButton(
-            onPressed: () {
-              context.read<CurrentWeatherBloc>().add(FetchCurrentWeather());
-            },
-            child: Text(
-              "Try again",
-            )),
-      ],
-    ));
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error,
+              size: 64,
+              color: Colors.black54,
+            ),
+            SizedBox(
+              height: 12,
+            ),
+            Text(
+              errorState.message,
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .headline6
+                  .copyWith(color: Colors.black),
+            ),
+            SizedBox(
+              height: 12,
+            ),
+            ElevatedButton(
+                onPressed: () {
+                  context.read<CurrentWeatherBloc>().add(FetchCurrentWeather());
+                },
+                child: Text(
+                  "Try again",
+                )),
+          ],
+        ));
   }
 }
 

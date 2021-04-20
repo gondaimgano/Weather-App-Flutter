@@ -38,10 +38,11 @@ class CurrentWeatherBloc
           currentWeatherResponse: _currentWeatherResponse,
           forecastResponse: _forecastResponse,
           formattedData: _formattedData);
-
+print("fetching....");
       var response = await _repository.fetchCurrentLocationWeather();
       var response0 = await _repository.fetchForecastForLast(days: 30);
-
+      bool isFirstRun = await _repository.ensureFirstTimeRun();
+      print("done....");
       if (response.isSuccessful && response0.isSuccessful) {
         _currentWeatherResponse =
             CurrentWeatherResponse.fromJson(response.body);
@@ -52,6 +53,7 @@ class CurrentWeatherBloc
           _currentWeatherResponse,
           _forecastResponse,
           _formattedData,
+          isFirstRun,
         );
       } else {
         throw FailureException(
@@ -62,6 +64,7 @@ class CurrentWeatherBloc
     } on HandshakeException {
       yield CurrentWeatherFailed("Connection Interrupted");
     } on PlatformException {
+      print("denied");
       add(FetchCurrentWeather());
     } catch (ex) {
       yield CurrentWeatherFailed(ex.toString());
