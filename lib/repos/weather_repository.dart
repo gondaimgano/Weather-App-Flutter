@@ -19,9 +19,9 @@ class WeatherRepository {
   }
 
   Future<Response> fetchCurrentLocationWeather() async {
-    print("request location");
+
     var _locationData = await _determinePosition();
-    print(_locationData);
+
     var response = await _apiService.getCurrentWeather(
       _locationData.longitude,
       _locationData.latitude,
@@ -31,7 +31,7 @@ class WeatherRepository {
   }
 
   Future<Response> fetchForecastForLast({int days}) async {
-    print("request location");
+
     var _locationData = await _determinePosition();
 
     var response = await _apiService.getForcastLastFiveDays(
