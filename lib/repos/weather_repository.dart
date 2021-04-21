@@ -7,12 +7,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class WeatherRepository {
   final WeatherApiService _apiService;
-  LocationData _locationData ;
   WeatherRepository(this._apiService);
 
-  Future<bool> ensureFirstTimeRun()async{
+  Future<bool> ensureFirstTimeRun() async {
     var prefs = await SharedPreferences.getInstance();
-    if(prefs.getBool("first_run")??true){
+    if (prefs.getBool("first_run") ?? true) {
       prefs.setBool("first_run", false);
       return true;
     }
@@ -21,19 +20,19 @@ class WeatherRepository {
 
   Future<Response> fetchCurrentLocationWeather() async {
     print("request location");
-    _locationData= await _determinePosition();
+    var _locationData = await _determinePosition();
     print(_locationData);
     var response = await _apiService.getCurrentWeather(
       _locationData.longitude,
       _locationData.latitude,
     );
- print(response);
+    print(response);
     return response;
   }
 
   Future<Response> fetchForecastForLast({int days}) async {
     print("request location");
-    _locationData= await _determinePosition();
+    var _locationData = await _determinePosition();
 
     var response = await _apiService.getForcastLastFiveDays(
       _locationData.longitude,
