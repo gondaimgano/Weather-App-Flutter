@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class Util {
   static const String baseUrl = 'https://api.openweathermap.org/data';
   static const String apiVersion = '/2.5';
-  static const String token = '93b63d68b57bd7c4d83f59fc1b599b9d';
+  static const String token = 'provide_your_own_token';
   static const Color RAINY = Color(0xff57575d);
   static const String rainyURL = 'assets/images/sea_rainy.png';
   static const Color SUNNY = Color(0xff47ab2f);

@@ -14,6 +14,8 @@ Plugins used are:
 - chopper 
 - flutter_bloc
 
+Before running the app, provide your own OpenWeather token and set it in the `Util.token` property in [lib/utils/util.dart](/Users/gondaimgano/AndroidStudioProjects/Weather-App-Flutter/lib/utils/util.dart).
+
 <img src=https://github.com/gondaimgano/Weather-App-Flutter/blob/master/Screenshot_20210421_190905.png/>
 A few resources to get you started if this is your first Flutter project:
 
