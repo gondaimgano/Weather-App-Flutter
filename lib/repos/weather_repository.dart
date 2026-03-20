@@ -1,4 +1,7 @@
+import 'package:chopper/chopper.dart';
+import 'package:dvt_weather_app/exception/failure_exception.dart';
 import 'package:dvt_weather_app/model/current_weather_response.dart';
+import 'package:dvt_weather_app/model/error_response.dart';
 import 'package:dvt_weather_app/model/forecast_response.dart';
 import 'package:dvt_weather_app/service/weather_api_service.dart';
 import 'package:location/location.dart';
@@ -24,7 +27,7 @@ class WeatherRepository {
       locationData.longitude!,
       locationData.latitude!,
     );
-    return CurrentWeatherResponse.fromJson(response);
+    return _parseCurrentWeatherResponse(response);
   }
 
   Future<ForecastResponse> fetchForecastForLast({int days = 30}) async {
@@ -34,7 +37,7 @@ class WeatherRepository {
       locationData.latitude!,
       days,
     );
-    return ForecastResponse.fromJson(response);
+    return _parseForecastResponse(response);
   }
 
   Future<LocationData> _determinePosition() async {
@@ -62,5 +65,34 @@ class WeatherRepository {
       throw Exception('Unable to determine your current location.');
     }
     return locationData;
+  }
+
+  CurrentWeatherResponse _parseCurrentWeatherResponse(
+    Response<Map<String, dynamic>> response,
+  ) {
+    if (response.isSuccessful && response.body != null) {
+      return CurrentWeatherResponse.fromJson(response.body!);
+    }
+    throw FailureException(_parseErrorResponse(response));
+  }
+
+  ForecastResponse _parseForecastResponse(
+    Response<Map<String, dynamic>> response,
+  ) {
+    if (response.isSuccessful && response.body != null) {
+      return ForecastResponse.fromJson(response.body!);
+    }
+    throw FailureException(_parseErrorResponse(response));
+  }
+
+  ErrorResponse _parseErrorResponse(Response<Map<String, dynamic>> response) {
+    final error = response.error;
+    if (error is Map<String, dynamic>) {
+      return ErrorResponse.fromJson(error);
+    }
+    return ErrorResponse(
+      cod: response.statusCode.toString(),
+      message: 'Weather request failed (${response.statusCode}).',
+    );
   }
 }

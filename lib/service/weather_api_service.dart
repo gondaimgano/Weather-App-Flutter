@@ -1,76 +1,57 @@
-import 'dart:convert';
+import 'dart:async';
 
-import 'package:dvt_weather_app/exception/failure_exception.dart';
-import 'package:dvt_weather_app/model/error_response.dart';
+import 'package:chopper/chopper.dart';
 import 'package:dvt_weather_app/utils/util.dart';
-import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart' as logging;
 
-class WeatherApiService {
-  const WeatherApiService();
+part 'weather_api_service.chopper.dart';
 
-  static WeatherApiService create() => const WeatherApiService();
-
-  Future<Map<String, dynamic>> getCurrentWeather(
-    double lon,
-    double lat, {
-    String units = 'metric',
-  }) {
-    return _get(
-      '/weather',
-      {
-        'lon': lon.toString(),
-        'lat': lat.toString(),
-        'units': units,
-      },
+@ChopperApi(baseUrl: Util.apiVersion)
+abstract class WeatherApiService extends ChopperService {
+  static WeatherApiService create() {
+    final client = ChopperClient(
+      baseUrl: Uri.parse(Util.baseUrl),
+      services: [
+        _$WeatherApiService(),
+      ],
+      converter: const JsonConverter(),
+      errorConverter: const JsonConverter(),
+      interceptors: [
+        _ApiKeyInterceptor(),
+        HttpLoggingInterceptor(
+          level: Level.basic,
+          logger: logging.Logger('Chopper'),
+        ),
+      ],
     );
+
+    return client.getService<WeatherApiService>();
   }
 
-  Future<Map<String, dynamic>> getForcastLastFiveDays(
-    double lon,
-    double lat,
-    int cnt, {
-    String units = 'metric',
-  }) {
-    return _get(
-      '/forecast',
-      {
-        'lon': lon.toString(),
-        'lat': lat.toString(),
-        'cnt': cnt.toString(),
-        'units': units,
-      },
-    );
-  }
+  @GET(path: '/weather')
+  Future<Response<Map<String, dynamic>>> getCurrentWeather(
+    @Query('lon') double lon,
+    @Query('lat') double lat, {
+    @Query('units') String units = 'metric',
+  });
 
-  Future<Map<String, dynamic>> _get(
-    String path,
-    Map<String, String> queryParameters,
-  ) async {
-    final uri = Uri.parse('${Util.baseUrl}${Util.apiVersion}$path').replace(
-      queryParameters: {
-        ...queryParameters,
-        'appid': Util.token,
-      },
-    );
-    final response = await http.get(uri);
-    final body = response.body.isEmpty ? null : jsonDecode(response.body);
+  @GET(path: '/forecast')
+  Future<Response<Map<String, dynamic>>> getForcastLastFiveDays(
+    @Query('lon') double lon,
+    @Query('lat') double lat,
+    @Query('cnt') int cnt, {
+    @Query('units') String units = 'metric',
+  });
+}
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (body is Map<String, dynamic>) {
-        return body;
-      }
-      throw FailureException(
-        ErrorResponse(message: 'Unexpected response from weather service.'),
-      );
-    }
-
-    final message = body is Map<String, dynamic>
-        ? ErrorResponse.fromJson(body).message
-        : null;
-    throw FailureException(
-      ErrorResponse(
-        message: message ?? 'Weather request failed (${response.statusCode}).',
-      ),
+class _ApiKeyInterceptor implements Interceptor {
+  @override
+  FutureOr<Response<BodyType>> intercept<BodyType>(Chain<BodyType> chain) {
+    final request = chain.request;
+    final parameters = Map<String, dynamic>.from(request.parameters)
+      ..['appid'] = Util.token;
+    return chain.proceed(
+      request.copyWith(parameters: parameters),
     );
   }
 }
