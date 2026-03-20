@@ -1,26 +1,28 @@
+import 'package:dvt_weather_app/bloc/index.dart';
+import 'package:dvt_weather_app/pages/index.dart';
 import 'package:dvt_weather_app/repos/weather_repository.dart';
 import 'package:dvt_weather_app/service/weather_api_service.dart';
 import 'package:flutter/material.dart';
-import 'package:dvt_weather_app/bloc/index.dart';
-import 'package:dvt_weather_app/pages/index.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logging/logging.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
 
   await SystemChrome.setPreferredOrientations(
-      [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp]);
-  runApp(MyApp());
+    [DeviceOrientation.portraitDown, DeviceOrientation.portraitUp],
+  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -29,52 +31,55 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         brightness: Brightness.dark,
       ),
-      home: RegisterService(),
+      home: const RegisterService(),
     );
   }
 }
 
 class RegisterService extends StatelessWidget {
+  const RegisterService({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
+    return RepositoryProvider<WeatherApiService>(
       create: (_) => WeatherApiService.create(),
-      child: RegisterRepository(),
+      child: const RegisterRepository(),
     );
   }
 }
 
 class RegisterRepository extends StatelessWidget {
+  const RegisterRepository({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      create: (_) => WeatherRepository(
-        context.read(),
-      ),
-      child: RegisterBlocs(),
+    return RepositoryProvider<WeatherRepository>(
+      create: (_) => WeatherRepository(context.read<WeatherApiService>()),
+      child: const RegisterBlocs(),
     );
   }
 }
 
 class RegisterBlocs extends StatelessWidget {
+  const RegisterBlocs({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-            create: (_) => CurrentWeatherBloc(context.read())
-              ..add(
-                FetchCurrentWeather(),
-              )),
+        BlocProvider<CurrentWeatherBloc>(
+          create: (_) => CurrentWeatherBloc(context.read<WeatherRepository>())
+            ..add(const FetchCurrentWeather()),
+        ),
       ],
-      child: DVTWeatherApp(),
+      child: const DVTWeatherApp(),
     );
   }
 }
 
 class DVTWeatherApp extends StatelessWidget {
+  const DVTWeatherApp({super.key});
+
   @override
-  Widget build(BuildContext context) {
-    return HomePage();
-  }
+  Widget build(BuildContext context) => const HomePage();
 }

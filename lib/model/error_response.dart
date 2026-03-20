@@ -1,18 +1,18 @@
 class ErrorResponse {
-  String cod;
-  String message;
+  final String? cod;
+  final String? message;
 
   ErrorResponse({this.cod, this.message});
 
-  ErrorResponse.fromJson(Map<String, dynamic> json) {
-   // cod = json['cod'];
-    message = json['message'];
-  }
+  factory ErrorResponse.fromJson(Map<String, dynamic> json) => ErrorResponse(
+        cod: json['cod']?.toString(),
+        message: json['message']?.toString(),
+      );
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['cod'] = this.cod;
-    data['message'] = this.message;
-    return data;
+    return {
+      'cod': cod,
+      'message': message,
+    };
   }
 }

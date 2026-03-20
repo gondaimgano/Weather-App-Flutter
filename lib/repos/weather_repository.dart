@@ -1,72 +1,66 @@
-import 'package:chopper/chopper.dart';
+import 'package:dvt_weather_app/model/current_weather_response.dart';
+import 'package:dvt_weather_app/model/forecast_response.dart';
 import 'package:dvt_weather_app/service/weather_api_service.dart';
-import 'package:flutter/services.dart';
 import 'package:location/location.dart';
-import 'package:permission_handler/permission_handler.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class WeatherRepository {
   final WeatherApiService _apiService;
+
   WeatherRepository(this._apiService);
 
   Future<bool> ensureFirstTimeRun() async {
-    var prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool("first_run") ?? true) {
-      prefs.setBool("first_run", false);
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('first_run') ?? true) {
+      await prefs.setBool('first_run', false);
       return true;
     }
     return false;
   }
 
-  Future<Response> fetchCurrentLocationWeather() async {
-
-    var _locationData = await _determinePosition();
-
-    var response = await _apiService.getCurrentWeather(
-      _locationData.longitude,
-      _locationData.latitude,
+  Future<CurrentWeatherResponse> fetchCurrentLocationWeather() async {
+    final locationData = await _determinePosition();
+    final response = await _apiService.getCurrentWeather(
+      locationData.longitude!,
+      locationData.latitude!,
     );
-    print(response);
-    return response;
+    return CurrentWeatherResponse.fromJson(response);
   }
 
-  Future<Response> fetchForecastForLast({int days}) async {
-
-    var _locationData = await _determinePosition();
-
-    var response = await _apiService.getForcastLastFiveDays(
-      _locationData.longitude,
-      _locationData.latitude,
+  Future<ForecastResponse> fetchForecastForLast({int days = 30}) async {
+    final locationData = await _determinePosition();
+    final response = await _apiService.getForcastLastFiveDays(
+      locationData.longitude!,
+      locationData.latitude!,
       days,
     );
-
-    return response;
+    return ForecastResponse.fromJson(response);
   }
 
   Future<LocationData> _determinePosition() async {
-    Location location = new Location();
+    final location = Location();
 
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-    LocationData _locationData;
-
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        throw Exception("Permission not granted");
-      }
-    }
-    await p.Permission.byValue(1).request().isGranted;
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        throw Exception("Location Permission denied");
+    var serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
+        throw Exception('Location service is disabled.');
       }
     }
 
-    _locationData = await location.getLocation();
-    return _locationData;
+    var permissionGranted = await location.hasPermission();
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+    }
+
+    if (permissionGranted != PermissionStatus.granted) {
+      throw Exception('Location permission denied.');
+    }
+
+    final locationData = await location.getLocation();
+    if (locationData.latitude == null || locationData.longitude == null) {
+      throw Exception('Unable to determine your current location.');
+    }
+    return locationData;
   }
 }

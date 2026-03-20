@@ -1,50 +1,76 @@
-import 'package:chopper/chopper.dart';
+import 'dart:convert';
+
+import 'package:dvt_weather_app/exception/failure_exception.dart';
+import 'package:dvt_weather_app/model/error_response.dart';
 import 'package:dvt_weather_app/utils/util.dart';
+import 'package:http/http.dart' as http;
 
-// Source code generation in Dart works by creating a new file which contains a "companion class".
-// In order for the source gen to know which file to generate and which files are "linked", you need to use the part keyword.
-part 'weather_api_service.chopper.dart';
+class WeatherApiService {
+  const WeatherApiService();
 
-@ChopperApi(baseUrl: Util.apiVersion)
-abstract class WeatherApiService extends ChopperService {
+  static WeatherApiService create() => const WeatherApiService();
 
-  @Get(path: "/weather")
-  Future<Response> getCurrentWeather(
-      @Query("lon") double lon,
-      @Query("lat") double lat,
-      {@Query("units") String units ="metric"}
-      );
-  @Get(path:"/forecast")
-  Future<Response> getForcastLastFiveDays(
-      @Query("lon") double lon,
-      @Query("lat") double lat,
-      @Query("cnt") int cnt,
-      {@Query("units") String units ="metric"}
-      );
-
-
-  static WeatherApiService create() {
-    final client = ChopperClient(
-      baseUrl: Util.baseUrl,
-      interceptors: [
-        HttpLoggingInterceptor(),
-            (Request request) async {
-              final params = Map<String, dynamic>.from(request.parameters);
-              params['appid'] = Util.token;
-          return request.copyWith(parameters: params);
-        },
-      ],
-      services: [
-
-        // The generated implementation
-        _$WeatherApiService(),
-      ],
-      // Converts data to & from JSON and adds the application/json header.
-      converter: JsonConverter(),
-      errorConverter: JsonConverter(),
+  Future<Map<String, dynamic>> getCurrentWeather(
+    double lon,
+    double lat, {
+    String units = 'metric',
+  }) {
+    return _get(
+      '/weather',
+      {
+        'lon': lon.toString(),
+        'lat': lat.toString(),
+        'units': units,
+      },
     );
+  }
 
-    // The generated class with the ChopperClient passed in
-    return _$WeatherApiService(client);
+  Future<Map<String, dynamic>> getForcastLastFiveDays(
+    double lon,
+    double lat,
+    int cnt, {
+    String units = 'metric',
+  }) {
+    return _get(
+      '/forecast',
+      {
+        'lon': lon.toString(),
+        'lat': lat.toString(),
+        'cnt': cnt.toString(),
+        'units': units,
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> _get(
+    String path,
+    Map<String, String> queryParameters,
+  ) async {
+    final uri = Uri.parse('${Util.baseUrl}${Util.apiVersion}$path').replace(
+      queryParameters: {
+        ...queryParameters,
+        'appid': Util.token,
+      },
+    );
+    final response = await http.get(uri);
+    final body = response.body.isEmpty ? null : jsonDecode(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+      throw FailureException(
+        ErrorResponse(message: 'Unexpected response from weather service.'),
+      );
+    }
+
+    final message = body is Map<String, dynamic>
+        ? ErrorResponse.fromJson(body).message
+        : null;
+    throw FailureException(
+      ErrorResponse(
+        message: message ?? 'Weather request failed (${response.statusCode}).',
+      ),
+    );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:charcode/charcode.dart';
+import 'package:dvt_weather_app/bloc/index.dart';
 import 'package:dvt_weather_app/model/forecast_response.dart';
 import 'package:dvt_weather_app/utils/ext.dart';
 import 'package:dvt_weather_app/utils/helper_func.dart';
@@ -6,12 +6,13 @@ import 'package:dvt_weather_app/utils/util.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dvt_weather_app/bloc/index.dart';
 import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
@@ -21,77 +22,75 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       body: RefreshIndicator(
         onRefresh: () async {
-          context.read<CurrentWeatherBloc>().add(FetchCurrentWeather());
+          context.read<CurrentWeatherBloc>().add(const FetchCurrentWeather());
         },
         child: BlocConsumer<CurrentWeatherBloc, CurrentWeatherState>(
-            listener: (context, state) async {
-              if (state is CurrentWeatherLoaded) {
-                if(state.firstRun)
-                  await buildShowHelperDialog(context);
-          }
-        },
-            builder: (context, state) {
-              if (state is CurrentWeatherLoaded)
-                return _WeatherComponent(state: state);
-              if (state is CurrentWeatherFailed)
-                return _WeatherFailedComponent(errorState: state);
-              if (state is CurrentWeatherInProgress)
-                if (state
-                    .currentWeatherResponse !=
-                    null &&
-                    state.forecastResponse != null)
-                  return _WeatherComponent(state: state);
-              return Center(
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width * 0.23,
-                        child: LinearProgressIndicator(
-                          minHeight: 8,
-                          valueColor: AlwaysStoppedAnimation(Colors.black),
-                        ),
-                      ),
-                      SizedBox(height: 12,),
-                      Text("Fetching...", style: Theme
-                          .of(context)
-                          .textTheme
-                          .headline6
-                          .copyWith(color: Colors.black54),)
-                    ]
-
-                ),
-              );
-            }),
+          listener: (context, state) async {
+            if (state is CurrentWeatherLoaded && state.firstRun) {
+              await buildShowHelperDialog(context);
+            }
+          },
+          builder: (context, state) {
+            if (state is CurrentWeatherLoaded) {
+              return _WeatherComponent(state: state);
+            }
+            if (state is CurrentWeatherFailed) {
+              return _WeatherFailedComponent(errorState: state);
+            }
+            if (state is CurrentWeatherInProgress &&
+                state.currentWeatherResponse != null &&
+                state.forecastResponse != null) {
+              return _WeatherComponent(state: state);
+            }
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.23,
+                    child: const LinearProgressIndicator(minHeight: 8),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Fetching...',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(color: Colors.black54),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
-
-
 }
 
 class _WeatherComponent extends StatefulWidget {
   final CurrentWeatherState state;
 
-  const _WeatherComponent({
-    Key key,
-    this.state,
-  }) : super(key: key);
+  const _WeatherComponent({required this.state});
 
   @override
-  __WeatherComponentState createState() => __WeatherComponentState();
+  State<_WeatherComponent> createState() => __WeatherComponentState();
 }
 
 class __WeatherComponentState extends State<_WeatherComponent> {
+  static const _degreeSymbol = '\u00B0';
+
   String _url = Util.sunnyURL;
   Color _color = Util.SUNNY;
 
+  @override
+  void initState() {
+    super.initState();
+    _backgroundChange();
+  }
 
-  _backgroundChange() {
-    final weather = widget.state.currentWeatherResponse.weather;
+  void _backgroundChange() {
+    final weather = widget.state.currentWeatherResponse!.weather;
     setState(() {
       if (weather.isNotEmpty) {
         _url = weather.first.main.produceUrl();
@@ -101,55 +100,43 @@ class __WeatherComponentState extends State<_WeatherComponent> {
   }
 
   Widget _produceIcon(Weather weather) {
-    // print(weather.main);
-    if (weather.main.toLowerCase().contains("cloud"))
-      return IconButton(icon: Image.asset("assets/symbols/partlysunny.png"),
-          onPressed: () {});
-    if (weather.main.toLowerCase().contains("rain"))
+    if (weather.main.toLowerCase().contains('cloud')) {
       return IconButton(
-          icon: Image.asset("assets/symbols/rain.png"), onPressed: () {});
+        icon: Image.asset('assets/symbols/partlysunny.png'),
+        onPressed: () {},
+      );
+    }
+    if (weather.main.toLowerCase().contains('rain')) {
+      return IconButton(
+        icon: Image.asset('assets/symbols/rain.png'),
+        onPressed: () {},
+      );
+    }
     return IconButton(
-        icon: Image.asset("assets/symbols/clear.png"), onPressed: () {});
-  }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _backgroundChange();
+      icon: Image.asset('assets/symbols/clear.png'),
+      onPressed: () {},
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final weatherResponse = widget.state.currentWeatherResponse!;
+    final groupedForecasts = widget.state.formattedData.entries.toList();
+
     return SingleChildScrollView(
-      child: Container(
-        height: MediaQuery
-            .of(context)
-            .size
-            .height * 1.02,
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 1.02,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.45,
-              width: MediaQuery
-                  .of(context)
-                  .size
-                  .width,
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.45,
+              width: MediaQuery.of(context).size.width,
               child: Stack(
                 children: [
-                  Container(
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.45,
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width,
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.45,
+                    width: MediaQuery.of(context).size.width,
                   ),
                   Positioned.fill(
                     child: Image.asset(
@@ -158,16 +145,20 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                     ),
                   ),
                   Align(
-                    alignment: Alignment(1.0,-0.85),
+                    alignment: const Alignment(1.0, -0.85),
                     child: Padding(
                       padding: const EdgeInsets.all(10.0),
                       child: InkWell(
-                        onTap: ()async{
+                        onTap: () async {
                           await buildShowHelperDialog(context);
                         },
-                          child: Icon(Icons.help,size:35,color: Colors.white,)),
+                        child: const Icon(
+                          Icons.help,
+                          size: 35,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-
                   ),
                   Align(
                     alignment: Alignment.center,
@@ -176,34 +167,20 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          "${widget.state.currentWeatherResponse.main.temp
-                              .floor()} ${String.fromCharCode($deg)}",
+                          '${weatherResponse.main.temp.floor()} $_degreeSymbol',
                           textAlign: TextAlign.center,
-                          style: Theme
-                              .of(context)
-                              .textTheme
-                              .headline2,
+                          style: Theme.of(context).textTheme.displayMedium,
                         ),
-                        SizedBox(
-                          height: 12,
-                        ),
-                        if (widget
-                            .state.currentWeatherResponse.weather.isNotEmpty)
+                        const SizedBox(height: 12),
+                        if (weatherResponse.weather.isNotEmpty)
                           Text(
-                            widget.state.currentWeatherResponse.weather[0].main,
+                            weatherResponse.weather.first.main,
                             textAlign: TextAlign.center,
-                            style: Theme
-                                .of(context)
-                                .textTheme
-                                .headline6,
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                        SizedBox(
-                          height: 12,
-                        ),
+                        const SizedBox(height: 12),
                         if (widget.state is CurrentWeatherInProgress)
-                          CircularProgressIndicator.adaptive(
-                            valueColor: AlwaysStoppedAnimation(Colors.grey),
-                          ),
+                          const CircularProgressIndicator.adaptive(),
                       ],
                     ),
                   ),
@@ -212,89 +189,41 @@ class __WeatherComponentState extends State<_WeatherComponent> {
             ),
             Expanded(
               child: Container(
-                color: _color, //54717a 57575d
+                color: _color,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(
-                          left: 8.0, right: 8.0, top: 8.0),
+                        left: 8.0,
+                        right: 8.0,
+                        top: 8.0,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
+                          _TemperatureColumn(
+                            label: 'Min',
+                            temperature:
+                                '${weatherResponse.main.tempMin.floor()} $_degreeSymbol',
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                  "${widget.state.currentWeatherResponse.main
-                                      .tempMin.floor()} ${String.fromCharCode(
-                                      $deg)}",
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .headline6),
-                              SizedBox(
-                                height: 4,
-                              ),
-                              Text("Min",
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .caption
-                                      .copyWith(letterSpacing: 2)),
-                            ],
                           ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
+                          _TemperatureColumn(
+                            label: 'Current',
+                            temperature:
+                                '${weatherResponse.main.temp.floor()} $_degreeSymbol',
                             crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                  "${widget.state.currentWeatherResponse.main
-                                      .temp.floor()} ${String.fromCharCode(
-                                      $deg)}",
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .headline6),
-                              SizedBox(
-                                height: 4,
-                              ),
-                              Text("Current",
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .caption
-                                      .copyWith(letterSpacing: 2)),
-                            ],
                           ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
+                          _TemperatureColumn(
+                            label: 'Max',
+                            temperature:
+                                '${weatherResponse.main.tempMax.floor()} $_degreeSymbol',
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                  "${widget.state.currentWeatherResponse.main
-                                      .tempMax.floor()} ${String.fromCharCode(
-                                      $deg)}",
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .headline6),
-                              SizedBox(
-                                height: 4,
-                              ),
-                              Text("Max",
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .caption
-                                      .copyWith(letterSpacing: 2)),
-                            ],
-                          )
+                          ),
                         ],
                       ),
                     ),
-                    Divider(
+                    const Divider(
                       indent: 4,
                       endIndent: 4,
                       thickness: 1,
@@ -302,79 +231,56 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                     ),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(
-                            bottom: 8.0),
+                        padding: const EdgeInsets.only(bottom: 8.0),
                         child: ListView.separated(
-                          // physics: NeverScrollableScrollPhysics(),
-                          itemCount: widget.state.formattedData.length,
-                          separatorBuilder: (BuildContext context, int index) =>
-                              SizedBox(
-                                height: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height * 0.02,
-                              ),
-                          itemBuilder: (context, i) =>
-                              ExpansionTile(
-
-
-                                leading: Text(
-                                  DateFormat("EEEE").format(DateTime.parse(
-                                      widget.state.formattedData.values
-                                          .toList()[i].first.dtTxt)),
-                                  style: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .headline6,
+                          itemCount: groupedForecasts.length,
+                          separatorBuilder: (context, index) => SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.02,
+                          ),
+                          itemBuilder: (context, index) {
+                            final dayEntries = groupedForecasts[index].value;
+                            return ExpansionTile(
+                              leading: Text(
+                                DateFormat('EEEE').format(
+                                  DateTime.parse(dayEntries.first.dtTxt),
                                 ),
-                                title:
-                                _produceIcon(widget.state.formattedData.values
-                                    .toList()[i].first.weather.first),
-                                trailing: Text(
-                                    "${widget.state.formattedData.values
-                                        .toList()[i].first.main.temp
-                                        .floor()} ${String.fromCharCode(
-                                        $deg)} ",
-                                    style: Theme
-                                        .of(context)
-                                        .textTheme
-                                        .headline6),
-                                children: [
-                                  ListView.builder(
-                                    physics: NeverScrollableScrollPhysics(),
-                                    itemCount: widget.state.formattedData.values
-                                        .toList()[i].length,
-                                    itemBuilder: (context, j) {
-                                      return ListTile(
-                                          leading: Text(
-                                            DateFormat("h:mm a").format(
-                                                DateTime.parse(
-                                                    widget.state.formattedData
-                                                        .values.toList()[i][j]
-                                                        .dtTxt)),
-                                            style: Theme
-                                                .of(context)
-                                                .textTheme
-                                                .subtitle1,
-                                          ),
-                                          title: _produceIcon(
-                                              widget.state.formattedData.values
-                                                  .toList()[i][j].weather
-                                                  .first),
-                                          trailing: Text(
-                                              "${widget.state.formattedData
-                                                  .values.toList()[i][j].main
-                                                  .temp.floor()} ${String
-                                                  .fromCharCode($deg)} ",
-                                              style: Theme
-                                                  .of(context)
-                                                  .textTheme
-                                                  .subtitle1)
-
-                                      );
-                                    }, shrinkWrap: true,)
-                                ],
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
+                              title:
+                                  _produceIcon(dayEntries.first.weather.first),
+                              trailing: Text(
+                                '${dayEntries.first.main.temp.floor()} $_degreeSymbol ',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              children: [
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: dayEntries.length,
+                                  shrinkWrap: true,
+                                  itemBuilder: (context, itemIndex) {
+                                    final entry = dayEntries[itemIndex];
+                                    return ListTile(
+                                      leading: Text(
+                                        DateFormat('h:mm a').format(
+                                          DateTime.parse(entry.dtTxt),
+                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium,
+                                      ),
+                                      title: _produceIcon(entry.weather.first),
+                                      trailing: Text(
+                                        '${entry.main.temp.floor()} $_degreeSymbol ',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          },
                           shrinkWrap: true,
                         ),
                       ),
@@ -382,7 +288,7 @@ class __WeatherComponentState extends State<_WeatherComponent> {
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -390,46 +296,64 @@ class __WeatherComponentState extends State<_WeatherComponent> {
   }
 }
 
+class _TemperatureColumn extends StatelessWidget {
+  final String label;
+  final String temperature;
+  final CrossAxisAlignment crossAxisAlignment;
+
+  const _TemperatureColumn({
+    required this.label,
+    required this.temperature,
+    required this.crossAxisAlignment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: crossAxisAlignment,
+      children: [
+        Text(
+          temperature,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style:
+              Theme.of(context).textTheme.bodySmall?.copyWith(letterSpacing: 2),
+        ),
+      ],
+    );
+  }
+}
 
 class _WeatherFailedComponent extends StatelessWidget {
   final CurrentWeatherFailed errorState;
 
-  const _WeatherFailedComponent({Key key, this.errorState}) : super(key: key);
+  const _WeatherFailedComponent({required this.errorState});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error,
-              size: 64,
-              color: Colors.black54,
-            ),
-            SizedBox(
-              height: 12,
-            ),
-            Text(
-              errorState.message,
-              style: Theme
-                  .of(context)
-                  .textTheme
-                  .headline6
-                  .copyWith(color: Colors.black),
-            ),
-            SizedBox(
-              height: 12,
-            ),
-            ElevatedButton(
-                onPressed: () {
-                  context.read<CurrentWeatherBloc>().add(FetchCurrentWeather());
-                },
-                child: Text(
-                  "Try again",
-                )),
-          ],
-        ));
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.error,
+            size: 64,
+            color: Colors.black54,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            errorState.message,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.black),
+          ),
+        ],
+      ),
+    );
   }
 }
-
